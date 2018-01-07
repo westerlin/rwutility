@@ -7,5 +7,5 @@ setup(
    author='Rasmus Westerlin',
    author_email='rasmuswesterlin@gmail.com',
    packages=['rwutility'],  #same as name
-   install_requires=['os', 'sys','termios','platform','subprocess','tty','msvcrt'], #external packages as dependencies
+   install_requires=[], #external packages as dependencies
 )
