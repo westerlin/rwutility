@@ -8,6 +8,7 @@ RESET = "\033[0;0m"
 BOLD    = "\033[;1m"
 REVERSE = "\033[;7m"
 
+
 os = system()
 if os == 'Linux' or os == 'Darwin':
     rw_LEFT = chr(27)+chr(91)+chr(68)
@@ -19,14 +20,37 @@ if os == 'Linux' or os == 'Darwin':
     rw_CTRLC = chr(3)
     rw_BKSP = chr(127)
 elif os == 'Windows':
-    rw_LEFT = chr(224)+chr(72)
-    rw_RIGHT = chr(224)+chr(72)
+    rw_LEFT = chr(224)+chr(75)
+    rw_RIGHT = chr(224)+chr(77)
     rw_UP = chr(224)+chr(72)
-    rw_DOWN = chr(224)+chr(72)
+    rw_DOWN = chr(224)+chr(80)
     rw_ESC = chr(27)
     rw_ENTER = chr(13)
     rw_CTRLC = chr(3)
     rw_BKSP = chr(8)
+    import ctypes
+    from ctypes import c_long, c_wchar_p, c_ulong, c_void_p
+
+    class _COORD(ctypes.Structure):
+        _fields_ = [
+        ("X", ctypes.c_short),
+        ("Y", ctypes.c_short)]
+  
+    class _SMALL_RECT(ctypes.Structure):
+        _fields_ = [
+            ("Left", ctypes.c_short),
+            ("Top", ctypes.c_short),
+            ("Right", ctypes.c_short),
+            ("Bottom", ctypes.c_short)]
+  
+    class _CONSOLE_SCREEN_BUFFER_INFO(ctypes.Structure):
+        _fields_ = [
+            ("dwSize", _COORD),
+            ("dwCursorPosition", _COORD),
+            ("wAttributes", ctypes.c_ushort),
+            ("srWindow", _SMALL_RECT),
+            ("dwMaximumWindowSize", _COORD)]
+
 
 rw_ARROWS = [rw_LEFT,rw_RIGHT,rw_UP,rw_DOWN]
 rw_SPECIALS = rw_ARROWS + [rw_ENTER,rw_ESC,rw_BKSP]
@@ -41,25 +65,65 @@ def cls():
         call('cls', shell = True)
 
 def locate(x, y, text):
-     import sys
-     sys.stdout.write("\x1b7\x1b[%d;%df%s\x1b8" % (x, y, text))
-     sys.stdout.flush()
+    import sys
+    from platform import system
+    os = system()
+    if os == 'Linux' or os == 'Darwin':
+        sys.stdout.write("\x1b7\x1b[%d;%df%s\x1b8" % (x, y, text))
+        sys.stdout.flush()
+    elif os == 'Windows':
+       import ctypes
+       """Move cursor to position indicated by x and y."""
+       value = (x + (y << 16))
+       gHandle = ctypes.windll.kernel32.GetStdHandle (c_long (-11))
+       ctypes.windll.kernel32.SetConsoleCursorPosition (gHandle, c_ulong(value))
+       ctypes.windll.kernel32.WriteConsoleW (gHandle, c_wchar_p(text), c_ulong(len(text)), c_void_p(), None)
+
+def _move(x,y):
+    import ctypes
+    buffer_info = _CONSOLE_SCREEN_BUFFER_INFO()
+    gHandle = ctypes.windll.kernel32.GetStdHandle (c_long (-11))
+    ctypes.windll.kernel32.GetConsoleScreenBufferInfo(gHandle, ctypes.byref(buffer_info))
+    x += buffer_info.dwCursorPosition.X
+    y += buffer_info.dwCursorPosition.Y
+    value = (x + (y << 16))
+    ctypes.windll.kernel32.SetConsoleCursorPosition (gHandle, c_ulong(value))
 
 def goLeft(steps):
-    return rw_LEFT*steps
+    from platform import system
+    os = system()
+    if os == 'Linux' or os == 'Darwin':
+        print(rw_LEFT*steps,end="",flush=True)
+    elif os == 'Windows':
+        _move(-steps,0)
 
 def goRight(steps):
-    return rw_RIGHT*steps
+    from platform import system
+    os = system()
+    if os == 'Linux' or os == 'Darwin':
+        print(rw_RIGHT*steps,end="",flush=True)
+    elif os == 'Windows':
+        _move(steps,0)
 
 def goUp(steps):
-    return rw_UP*steps
+    from platform import system
+    os = system()
+    if os == 'Linux' or os == 'Darwin':
+        print(rw_UP*steps,end="",flush=True)
+    elif os == 'Windows':
+        _move(0,-steps)
 
 def goDown(steps):
-    return rw_DOWN*steps
-    #return (chr(27)+chr(91)+chr(66))*steps
+    from platform import system
+    os = system()
+    if os == 'Linux' or os == 'Darwin':
+        print(rw_DOWN*steps,end="",flush=True)
+    elif os == 'Windows':
+        _move(0,steps)
 
 def cleartrailing(newSentence,maxlen):
-    return newSentence+" "*(maxlen-len(newSentence))+(rw_LEFT)*(maxlen-len(newSentence))
+    print(newSentence+" "*(maxlen-len(newSentence)),end="",flush=True)
+    goLeft(maxlen-len(newSentence))
 
 def wrapper(text, indent=2, width=72):
     output = []
@@ -91,9 +155,7 @@ def sepSign(item, items,lastword="and"):
     return ", "
 
 def rawput(words=[]):
-    import sys
     userinput = Userinput()
-
     cpos = 0
     strlen =0
     fullstring = ""
@@ -106,29 +168,36 @@ def rawput(words=[]):
                 strlen+=1
                 fullstring = fullstring[:cpos]+high+fullstring[cpos:strlen]
                 cpos+=1
-                print(fullstring[cpos-1:strlen], end=goLeft(strlen-cpos),flush=True)
+                print(fullstring[cpos-1:strlen], end="",flush=True)
+                goLeft(strlen-cpos)
         if high==rw_LEFT and cpos > 0:
             cpos-=1
-            print(rw_LEFT, end='',flush=True)
+            goLeft(1)
+            #print(rw_LEFT, end='',flush=True)
         if high==rw_RIGHT and cpos <strlen:
             cpos+=1
-            print(rw_RIGHT, end='',flush=True)
+            goRight(1)
+            #print(rw_RIGHT, end='',flush=True)
         if high==rw_BKSP and cpos > 0 and strlen >0:
             cpos -=1
             strlen -=1
             fullstring = fullstring[:cpos]+fullstring[cpos+1:strlen+1]
-            print(goLeft(1)+fullstring[cpos:strlen]+" ", end=goLeft(strlen-cpos+1),flush=True)
+            goLeft(1)
+            print(fullstring[cpos:strlen]+" ", end="",flush=True)
+            goLeft(strlen-cpos+1)
         if vpos == len(words)-1 : words[-1] = fullstring
         if high == rw_UP and vpos > 0:
             vpos -= 1
             fullstring = words[vpos]
-            print(goLeft(cpos)+cleartrailing(fullstring,40),end="",flush=True)
+            goLeft(cpos)
+            cleartrailing(fullstring,40)
             cpos = len(fullstring)
             strlen = len(fullstring)
         if high == rw_DOWN and vpos < len(words)-1:
             vpos += 1
             fullstring = words[vpos]
-            print(goLeft(cpos)+cleartrailing(fullstring,40),end="",flush=True)
+            goLeft(cpos)
+            cleartrailing(fullstring,40)
             cpos = len(fullstring)
             strlen = len(fullstring)
         if high==rw_ENTER:
@@ -187,16 +256,19 @@ class _GetchUnix:
 
 class _GetchWindows:
     def __init__(self):
-        import msvcrt
+        pass
 
     def __call__(self):
         import msvcrt
         pattern=''
         ch = msvcrt.getch()
-        pattern += ch
         if ord(ch) == 224:
             ch = msvcrt.getch()
-            pattern += ch
+            pattern = chr(224)+chr(ord(ch))
+        else:
+            pattern = ch.decode('utf-8')
+        if pattern == rw_CTRLC:
+            raise Exception("User ctrl+c breakout!")
         return pattern
 
 
