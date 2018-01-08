@@ -35,14 +35,14 @@ elif os == 'Windows':
         _fields_ = [
         ("X", ctypes.c_short),
         ("Y", ctypes.c_short)]
-  
+
     class _SMALL_RECT(ctypes.Structure):
         _fields_ = [
             ("Left", ctypes.c_short),
             ("Top", ctypes.c_short),
             ("Right", ctypes.c_short),
             ("Bottom", ctypes.c_short)]
-  
+
     class _CONSOLE_SCREEN_BUFFER_INFO(ctypes.Structure):
         _fields_ = [
             ("dwSize", _COORD),
@@ -256,7 +256,7 @@ class _GetchUnix:
 
 class _GetchWindows:
     def __init__(self):
-        pass
+        import msvcrt
 
     def __call__(self):
         import msvcrt
