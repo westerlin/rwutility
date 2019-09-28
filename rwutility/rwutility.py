@@ -190,7 +190,7 @@ def rawput(words=[]):
     while True:
         high = userinput.get()
         if len(high)==1:
-            if ord(high) >31 and ord(high) < 127:
+            if (ord(high) >31 and ord(high) < 127) or (ord(high) in [197,198,216,229,230,248]):
                 strlen+=1
                 fullstring = fullstring[:cpos]+high+fullstring[cpos:strlen]
                 cpos+=1

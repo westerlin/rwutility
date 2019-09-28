@@ -1,12 +1,38 @@
 from platform import system
 
-RED   = "\033[1;31m"
-BLUE  = "\033[1;34m"
-CYAN  = "\033[1;36m"
-GREEN = "\033[0;32m"
-RESET = "\033[0;0m"
-BOLD    = "\033[;1m"
-REVERSE = "\033[;7m"
+RAWU_FCBLACK   = "\033[1;30m"
+RAWU_FCRED   = "\033[1;31m"
+RAWU_FCGREEN   = "\033[1;32m"
+RAWU_FCYELLOW  = "\033[1;33m"
+RAWU_FCBLUE  = "\033[1;34m"
+RAWU_FCMAGENTA = "\033[1;35m"
+RAWU_FCCYAN  = "\033[1;36m"
+RAWU_FCGRAY  = "\033[1;37m"
+RAWU_FCDARK  = "\033[1;38m"
+RAWU_FCWHITE  = "\033[1;97m"
+
+RAWU_BCBLACK   = "\033[1;40m"
+RAWU_BCRED   = "\033[1;41m"
+RAWU_BCGREEN   = "\033[1;42m"
+RAWU_BCYELLOW  = "\033[1;43m"
+RAWU_BCBLUE  = "\033[1;44m"
+RAWU_BCMAGENTA = "\033[1;45m"
+RAWU_BCCYAN  = "\033[1;46m"
+RAWU_BCGRAY  = "\033[1;47m"
+RAWU_BCDARK  = "\033[1;100m"
+RAWU_BCWHITE  = "\033[1;107m"
+
+RAWU_BOLD    = "\033[;1m"
+RAWU_DIM    = "\033[;2m"
+RAWU_UNDERLINED = "\033[;4m"
+RAWU_REVERSE = "\033[;7m"
+
+RAWU_BOLD_RESET    = "\033[;21m"
+RAWU_DIM_RESET    = "\033[;22m"
+RAWU_UNDERLINED_RESET = "\033[;24m"
+RAWU_REVERSE_RESET = "\033[;27m"
+
+RAWU_RESET = "\033[0;0m"
 
 
 os = system()
@@ -164,7 +190,7 @@ def rawput(words=[]):
     while True:
         high = userinput.get()
         if len(high)==1:
-            if ord(high) >31 and ord(high) < 127:
+            if (ord(high) >31 and ord(high) < 127) or (ord(high) in [197,198,216,229,230,248]):
                 strlen+=1
                 fullstring = fullstring[:cpos]+high+fullstring[cpos:strlen]
                 cpos+=1
